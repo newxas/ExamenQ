@@ -6,10 +6,11 @@ namespace ExamenQualisys.Models
     public class Stock
     {
         [Key]
+        [Required]
         public int Codigo_Stck { get; set; }
 
         [Required]
-        public int Cantidad {  get; set; }
+        public int Cantidad { get; set; }
 
         [Required]
         public string lote { get; set; } = string.Empty;
@@ -21,14 +22,13 @@ namespace ExamenQualisys.Models
         public int Codigo_Alm { get; set; }
 
         [Required]
-        public int Codigo_Art {  get; set; }
+        public int Codigo_Art { get; set; }
 
-        [ForeignKey("Codigo_Alm")]
-        [Required]
-        public Almacenes? Almacenes { get; set; }
-
-        [ForeignKey("Codigo_Art")]
-        [Required]
-        public Articulos? Articulos { get; set; }
+        //Acceso a llaves foraneas, se decidio comentar debido a que no se usara por ahora
+        //[ForeignKey("Codigo_Alm")]
+        //public Almacenes? Almacenes { get; set; }
+ 
+        //[ForeignKey("Codigo_Art")]
+        //public Articulos? Articulos { get; set; }
     }
 }

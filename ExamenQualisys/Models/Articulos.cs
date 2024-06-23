@@ -5,6 +5,7 @@ namespace ExamenQualisys.Models
     public class Articulos
     {
         [Key]
+        [Required]
         public int Codigo_Art { get; set; }
 
         [Required]

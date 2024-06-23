@@ -1,7 +1,6 @@
 ﻿using ExamenQualisys.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace ExamenQualisys.Controllers
 {
@@ -22,7 +21,9 @@ namespace ExamenQualisys.Controllers
         {
             if (_contex.Stock != null)
             {
-                var list = await _contex.Stock.Include(p => p.Articulos).Include(p => p.Almacenes).ToListAsync();
+                //Acceso a llaves foraneas, se decidio comentar debido a que no se usara por ahora
+                //var list = await _contex.Stock.Include(p => p.Articulos).Include(p => p.Almacenes).ToListAsync();
+                var list = await _contex.Stock.ToListAsync();
                 if (list.Count == 0)
                 {
                     _logger.LogInformation("Error 404 -> No se encontraron registros");
@@ -47,11 +48,12 @@ namespace ExamenQualisys.Controllers
                 return Problem("Hubo un error con el ID");
             }
 
-            var stck = await _contex.Stock
-                .Include(x => x.Almacenes)
-                .Include(y => y.Articulos)
-                .FirstOrDefaultAsync(z => z.Codigo_Stck == id);
-            
+            //Acceso a llaves foraneas, se decidio comentar debido a que no se usara por ahora
+            //var stck = await _contex.Stock
+            //    .Include(x => x.Almacenes)
+            //    .Include(y => y.Articulos)
+            //    .FirstOrDefaultAsync(z => z.Codigo_Stck == id);
+            var stck = await _contex.Stock.FirstOrDefaultAsync(z => z.Codigo_Stck == id);
             if (stck == null)
             {
                 _logger.LogInformation("Error 404 -> No se encontro el registro");
@@ -62,22 +64,24 @@ namespace ExamenQualisys.Controllers
 
         [HttpPost]
         [Route("Stock/Crear")]
-        public async Task<ActionResult> CrearStock(int cantidad, string lote, string fecha, int Codigo_Alm, int Codigo_Art)
+        public async Task<ActionResult> CrearStock(int Ncantidad, string Nlote, string Nfecha, int NCodigo_Alm, int NCodigo_Art)
         {
             try
             {
-                if (cantidad < 0  || lote == null || fecha == null || Codigo_Alm < 0 || Codigo_Art < 0)
+                if (Ncantidad < 0  || Nlote == null || Nfecha == null || NCodigo_Alm < 0 || NCodigo_Art < 0)
                 {
                     _logger.LogInformation("Error 500 -> Algo salio mal con la información Proporcionada");
                     return Problem("Algo salio mal con la información Proporcionada");
                 }
 
-                var stck = new Stock();
-                stck.Codigo_Alm = Codigo_Alm;
-                stck.Codigo_Art = Codigo_Art;
-                stck.Cantidad = cantidad;
-                stck.lote = lote;
-                stck.fecha = fecha;
+                var stck = new Stock
+                {
+                    Codigo_Alm = NCodigo_Alm,
+                    Codigo_Art = NCodigo_Art,
+                    Cantidad = Ncantidad,
+                    lote = Nlote,
+                    fecha = Nfecha
+                };
                 _contex.Add(stck);
                 await _contex.SaveChangesAsync();
                 return Ok(stck);
@@ -91,18 +95,23 @@ namespace ExamenQualisys.Controllers
 
         [HttpPut]
         [Route("Stock/Modificar")]
-        public async Task<ActionResult> ModificarStock(Stock stck)
+        public async Task<ActionResult> ModificarStock(Stock Nstock)
         {
             try
             {
-                var consultStck = await _contex.Stock.Where(i => i.Codigo_Stck == stck.Codigo_Stck).FirstOrDefaultAsync();
+                if(!ModelState.IsValid)
+                {
+                    _logger.LogInformation("Error 500 -> Algo salio mal con la información Proporcionada");
+                    return Problem("Algo salio mal con la información Proporcionada");
+                }
+                var consultStck = await _contex.Stock.Where(i => i.Codigo_Stck == Nstock.Codigo_Stck).FirstOrDefaultAsync();
                 if (consultStck != null)
                 {
-                    consultStck.lote = stck.lote;
-                    consultStck.Cantidad = stck.Cantidad;
-                    consultStck.fecha = stck.fecha;
-                    consultStck.Codigo_Alm = stck.Codigo_Alm;
-                    consultStck.Codigo_Art = stck.Codigo_Art;
+                    consultStck.lote = Nstock.lote;
+                    consultStck.Cantidad = Nstock.Cantidad;
+                    consultStck.fecha = Nstock.fecha;
+                    consultStck.Codigo_Alm = Nstock.Codigo_Alm;
+                    consultStck.Codigo_Art = Nstock.Codigo_Art;                 
                     _contex.SaveChanges();
                     return Ok(consultStck);
                 }

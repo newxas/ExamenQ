@@ -61,6 +61,12 @@ namespace ExamenQualisys.Controllers
         {
             try
             {
+
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogInformation("Error 500 -> Algo salio mal con la información Proporcionada");
+                    return Problem("Algo salio mal con la información Proporcionada");
+                }
                 var ConsultaAlm = await _contex.Almacenes.Where(y => y.Codigo_Alm == almacen.Codigo_Alm).FirstOrDefaultAsync();
                 if (ConsultaAlm != null)
                 {
