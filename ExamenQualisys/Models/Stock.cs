@@ -17,6 +17,12 @@ namespace ExamenQualisys.Models
         [Required]
         public string fecha { get; set; } = string.Empty;
 
+        [Required]
+        public int Codigo_Alm { get; set; }
+
+        [Required]
+        public int Codigo_Art {  get; set; }
+
         [ForeignKey("Codigo_Alm")]
         [Required]
         public Almacenes? Almacenes { get; set; }

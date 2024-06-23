@@ -22,6 +22,11 @@ namespace ExamenQualisys.Controllers
             if (_contex.Almacenes != null)
             {
                 var list = await _contex.Almacenes.ToListAsync();
+                if (list.Count == 0)
+                {
+                    _logger.LogInformation("Error 404 -> No se encontraron registros");
+                    return NotFound("No se encontraron registros");
+                }
                 return Ok(list);
             }
             else

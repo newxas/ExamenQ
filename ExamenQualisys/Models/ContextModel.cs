@@ -10,6 +10,6 @@ namespace ExamenQualisys.Models
 
         public DbSet<Articulos> Articulos { get; set; }
         public DbSet<Almacenes> Almacenes { get; set; }
-        public DbSet<Stock> Stocks { get; set; }
+        public DbSet<Stock> Stock { get; set; }
     }
 }

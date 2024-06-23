@@ -1,9 +1,145 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ExamenQualisys.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ExamenQualisys.Controllers
 {
     public class StockController : Controller
     {
+        private readonly ContextModel _contex;
+        private readonly ILogger<StockController> _logger;
 
+        public StockController(ContextModel context, ILogger<StockController> logger)
+        {
+            _contex = context;
+            _logger = logger;
+        }
+
+        [HttpGet]
+        [Route("Stock/Lista")]
+        public async Task<ActionResult> ListaArticulos()
+        {
+            if (_contex.Stock != null)
+            {
+                var list = await _contex.Stock.Include(p => p.Articulos).Include(p => p.Almacenes).ToListAsync();
+                if (list.Count == 0)
+                {
+                    _logger.LogInformation("Error 404 -> No se encontraron registros");
+                    return NotFound("No se encontraron registros");
+                }           
+                return Ok(list);
+            }
+            else
+            {
+                _logger.LogInformation("Error 500 -> Entity set 'ContextModel.Articulos'  is null");
+                return Problem("Entity set 'ContextModel.Articulos'  is null.");
+            }
+        }
+
+        [HttpGet]
+        [Route("Stock/Consulta")]
+        public async Task<ActionResult> ConsultaStock(int? id)
+        {
+            if (id == null)
+            {
+                _logger.LogInformation("Error 500 -> Hubo un error con el ID");
+                return Problem("Hubo un error con el ID");
+            }
+
+            var stck = await _contex.Stock
+                .Include(x => x.Almacenes)
+                .Include(y => y.Articulos)
+                .FirstOrDefaultAsync(z => z.Codigo_Stck == id);
+            
+            if (stck == null)
+            {
+                _logger.LogInformation("Error 404 -> No se encontro el registro");
+                return NotFound("No se encontro el registro");
+            }
+            return Ok(stck);
+        }
+
+        [HttpPost]
+        [Route("Stock/Crear")]
+        public async Task<ActionResult> CrearStock(int cantidad, string lote, string fecha, int Codigo_Alm, int Codigo_Art)
+        {
+            try
+            {
+                if (cantidad < 0  || lote == null || fecha == null || Codigo_Alm < 0 || Codigo_Art < 0)
+                {
+                    _logger.LogInformation("Error 500 -> Algo salio mal con la información Proporcionada");
+                    return Problem("Algo salio mal con la información Proporcionada");
+                }
+
+                var stck = new Stock();
+                stck.Codigo_Alm = Codigo_Alm;
+                stck.Codigo_Art = Codigo_Art;
+                stck.Cantidad = cantidad;
+                stck.lote = lote;
+                stck.fecha = fecha;
+                _contex.Add(stck);
+                await _contex.SaveChangesAsync();
+                return Ok(stck);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Error 500 -> Algo salio mal con la información Proporcionada, {ex}", ex);
+                return Problem("Algo salio mal con la información Proporcionada");
+            }
+        }
+
+        [HttpPut]
+        [Route("Stock/Modificar")]
+        public async Task<ActionResult> ModificarStock(Stock stck)
+        {
+            try
+            {
+                var consultStck = await _contex.Stock.Where(i => i.Codigo_Stck == stck.Codigo_Stck).FirstOrDefaultAsync();
+                if (consultStck != null)
+                {
+                    consultStck.lote = stck.lote;
+                    consultStck.Cantidad = stck.Cantidad;
+                    consultStck.fecha = stck.fecha;
+                    consultStck.Codigo_Alm = stck.Codigo_Alm;
+                    consultStck.Codigo_Art = stck.Codigo_Art;
+                    _contex.SaveChanges();
+                    return Ok(consultStck);
+                }
+                else
+                {
+                    _logger.LogInformation("Error 404 -> No se encontro el registro");
+                    return NotFound("No se encontro el registro");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Error 500 -> Algo salio mal con la información Proporcionada, {ex}", ex);
+                return Problem("Algo salio mal con la información Proporcionada");
+            }
+        }
+
+        [HttpDelete]
+        [Route("Stock/Eliminar")]
+        public async Task<ActionResult> EliminarStock(int? id)
+        {
+            if (id == null)
+            {
+                _logger.LogInformation("Error 500 -> Hubo un error con el ID");
+                return Problem("Hubo un error con el ID");
+            }
+            var stock = await _contex.Stock.FindAsync(id);
+            if (stock != null)
+            {
+                _contex.Stock.Remove(stock);
+                await _contex.SaveChangesAsync();
+                return Ok("Registro Eliminado Correctamente");
+            }
+            else
+            {
+                _logger.LogInformation("Error 404 -> No se encontro el registro");
+                return NotFound("No se encontro el registro");
+            }
+        }
     }
 }
